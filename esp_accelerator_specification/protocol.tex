@@ -1,0 +1,202 @@
+\chapter{Accelerator Signal Level Protocol}
+
+\section{DMA Transactions}
+
+%------------------------------------------
+\begin{wraptable}{r}[0.25in]{0.4\textwidth}
+\centering
+\small
+\caption{Encoding of DMA size}\label{tab:hsize}
+\begin{tabular}{|c|c|c|}
+\hline
+  \textbf{Encoding} & \textbf{Name} & \textbf{Bitwidth} \\
+\hline
+  000  & BYTE & 8 \\
+\hline
+  001  & HWORD & 16 \\
+\hline
+  010  & WORD & 32 \\
+\hline
+  011  & DWORD & 64 \\
+\hline
+\end{tabular}
+\end{wraptable}
+%------------------------------------------
+{
+The master of a direct-memory access (DMA) transaction is always an
+accelerator. The accelerator initiates a DMA read transfer through the
+\texttt{dma\_read\_ctrl} channel and a DMA write transfer through the
+\texttt{dma\_write\_ctrl} channel. Tables~\ref{tab:hsize} and~\ref{tab:dma_ctrl} describe
+the fields and the encoding of the two control channels.
+
+DMA control channels are LIC that follow a simple protocol: when both {\it
+  valid} and {\it ready} control signals are set, the value of the data bus is
+sampled by the slave. From the accelerator view point {\it valid} and {\it
+  ready} are independent and there should be no combinational path between the
+two.
+
+An ESP accelerator does not issue requests using physical addresses. The field
+{\it index} of the control channels indicates an offset with respect to a
+virtual memory region reserved for the accelerator. The ESP device driver
+allocates this region in pages and generates a corresponding page table. The ESP
+accelerator socket handles address translation, therefore the accelerator can
+operate as if the reserved area was contiguous.
+}
+
+\begin{table}[h!]
+\centering
+\small
+\caption{Description of the DMA control channels {\it dma\_read\_ctrl} and {\it dma\_write\_ctrl}.}\label{tab:dma_ctrl}
+\begin{tabular}{|p{2.25in} p{0.75in}| p{3.25in} |}
+\hline
+  \textbf{Signal}         & \textbf{Driver} & \textbf{Description} \\
+\hline
+  \verb dma_[read|write]_ctrl_data_index  & accelerator & Offset of a DMA read
+                                                          or write transaction
+                                                          expressed as number of
+                                                          beats. This offset is
+                                                          used to compute the
+                                                          starting address of
+                                                          the transaction. \\
+\hline
+  \verb dma_[read|write]_ctrl_data_length & accelerator & Length of a DMA read
+                                                          or write transaction
+                                                          expressed as number of
+                                                          beats.\\
+\hline
+  \verb dma_[read|write]_ctrl_data_size  & accelerator & Bitwidth of the data
+                                                         token for the DMA
+                                                         transaction. This signal
+                                                         is used to correct the
+                                                         NoC flits when
+                                                         the processor
+                                                         architecture follows
+                                                         the {\it big endian}
+                                                         convention to store
+                                                         data in memory. This
+                                                         signal follows the
+                                                         encoding in
+                                                         Table~\ref{tab:hsize}.\\
+\hline
+  \verb dma_[read|write]_ctrl_valid  & accelerator & Flag indicating that a new
+                                                     DMA transaction
+                                                     request. When set, all data
+                                                     fields must be valid. This
+                                                     flag must not depend
+                                                     combinationally from the
+                                                     corresponding {\it ready}
+                                                     signal.\\
+\hline
+  \verb dma_[read|write]_ctrl_ready  & socket & Flag indicating that the ESP
+                                                socket is ready to accept a new
+                                                DMA request. This
+                                                flag must not depend
+                                                combinationally from the
+                                                corresponding {\it valid}
+                                                signal.\\
+\hline
+\end{tabular}
+\end{table}
+
+\pagebreak
+
+For an accelerator with N-bits DMA interface (e.g. 64 bits), the physical
+address in Bytes of a DMA transaction is computed by the ESP socket as follows:
+
+\begin{equation}
+  addr = walk\_accelerator\_ptable(index * N / 8)
+\end{equation}
+
+The user-level driver is responsible to prepare data in memory using the same
+offsets used for DMA transfers by the accelerator. Offset calculation can be
+defined at design time by hard-coding the logic to compute offsets in the accelerator.
+Alternatively, offsets can be computed in software and configured at run
+time through user-defined CSRs.
+
+\begin{figure}[h!]
+\begin{tikztimingtable}[%
+    timing/dslope=0.1,
+    timing/.style={x=5ex,y=2ex},
+    x=5ex,
+    timing/rowdist=3ex,
+    timing/name/.style={font=\sffamily\scriptsize}
+]
+ \busref{clk}                                 & 30{c}                                                                                  \\
+ %% read ctrl
+ \busref[31:0]{dma\_read\_ctrl\_data\_index}  & u D{0x0}  4U 2D{0x10} 7.5U                                                             \\
+ \busref[31:0]{dma\_read\_ctrl\_data\_length} & u D{2}  4U 2D{4} 7.5U                                                                  \\
+ \busref[2:0]{dma\_read\_ctrl\_data\_size}    & u D{010}  4U 2D{011} 7.5U                                                              \\
+ \busref{dma\_read\_ctrl\_valid}              & l H  4L 2H 7.5L                                                                        \\
+ \slv{dma\_read\_ctrl\_ready}                 & [blue] l  H 4L ;[dotted]L; H 7.5L                                                      \\
+ %% read chnl
+ \slv[63:0]{dma\_read\_chnl\_data}            & [blue] u 3U D{$d_0, d_1$} D{$d_2, d_3$} 3U D{$d_4$} 2D{$d_5$} U D{$d_6$} D{$d_7$} 0.5U \\
+ \slv{dma\_read\_chnl\_valid}                 & [blue] l L ;[dotted]2L; 2H  2L ;[dotted]L; 3H ;[dotted]1L; 2H l                        \\
+ \busref{dma\_read\_chnl\_ready}              & l L ;[dotted]L; 3H 2L 2H ;[dotted]1L; 4H l                                             \\
+\extracode
+\begin{pgfonlayer}{background}
+\begin{scope}[semitransparent ,semithick]
+\vertlines[darkgray,dotted]{0.5,1.5 ,...,15.0}
+\end{scope}
+\end{pgfonlayer}
+\end{tikztimingtable}
+\label{wave:dma_read}\caption{Example of a DMA read transaction. Signals driven
+  by the ESP socket are marked in blue.}
+\end{figure}
+
+A DMA transaction is initiated with a single beat transfer on the DMA control
+channels. Once this transfer completes on the read control channel, the
+accelerator waits for the socket to fetch the requested data by setting {\it
+ready} high on the DMA read channel. A beat is successfully transferred any time
+{\it ready} and {\it valid} are set high during the same cycle. There is no
+restriction on the throughput of the transfer: the accelerator can apply
+backpressure by de-asserting the {\it ready} signal at any time. However, the
+accelerator must eventually complete the transaction by receiving exactly the
+number of beats requested. Early termination will cause a deadlock condition of
+the socket. Depending on the length of the transfer, deadlock can propagate to
+the NoC and even to a memory tile.
+
+\begin{figure}[h!]
+\begin{tikztimingtable}[%
+    timing/dslope=0.1,
+    timing/.style={x=5ex,y=2ex},
+    x=5ex,
+    timing/rowdist=3ex,
+    timing/name/.style={font=\sffamily\scriptsize}
+]
+ \busref{clk}                                  & 30{c}                                                                            \\
+ %% write ctrl
+ \busref[31:0]{dma\_write\_ctrl\_data\_index}  & u D{0x0}  5U 2D{0x10} 6.5U                                                       \\
+ \busref[31:0]{dma\_write\_ctrl\_data\_length} & u D{2}  5U 2D{4} 6.5U                                                            \\
+ \busref[2:0]{dma\_write\_ctrl\_data\_size}    & u D{010}  5U 2D{011} 6.5U                                                        \\
+ \busref{dma\_write\_ctrl\_valid}              & l H  5L 2H 6.5L                                                                  \\
+ \slv{dma\_write\_ctrl\_ready}                 & [blue] l  H 5L ;[dotted]L; H 6.5L                                                \\
+ %% write chnl
+ \busref[63:0]{dma\_write\_chnl\_data}         & u 2U 2D{$d_0, d_1$} D{$d_2, d_3$} 3U D{$d_4$} D{$d_5$} 2D{$d_6$} U D{$d_7$} 0.5U \\
+ \busref{dma\_write\_chnl\_valid}              & l 1L ;[dotted]L; 3H  3L 4H ;[dotted]L; H l                                       \\
+ \slv{dma\_write\_chnl\_ready}                 & [blue] l L ;[dotted]2L; 2H 3L 2H ;[dotted]1L; 3H l                               \\
+\extracode
+\begin{pgfonlayer}{background}
+\begin{scope}[semitransparent ,semithick]
+\vertlines[darkgray,dotted]{0.5,1.5 ,...,15.0}
+\end{scope}
+\end{pgfonlayer}
+\end{tikztimingtable}
+\label{wave:dma_write}\caption{Example of a DMA write transaction. Signals driven
+  by the ESP socket are marked in blue.}
+\end{figure}
+
+
+Symmetrically, when a DMA read transfer is configured, the accelerator must
+transfer the exact number of beats set with the {\it length} field. Data beats
+are transferred through the DMA write channel by setting the {\it valid} flag
+high when the corresponding data signal is valid. A beat is transferred if both
+{\it valid} and {\it ready} are set during the same cycle. No restriction is
+imposed on the throughput of the transfer. The accelerator must hold valid data
+on the DMA write channel when the socket is not ready to sample it. This
+condition may occur in case of contention for NoC links, or external memory
+channels.
+
+Figure~\ref{wave:dma_read} and~\ref{wave:dma_write} show two examples of DMA
+read and DMA write transactions. Signals in blue are driven by the socket, while
+signals in black are driven by the accelerator. Dotted lines indicate
+back-pressure, which can be applied by either the accelerator or the socket.
