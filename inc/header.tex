@@ -1,0 +1,77 @@
+
+%% Basic
+\usepackage[letterpaper, total={7in, 8.5in}]{geometry}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{wrapfig}
+
+%% Noindent
+\usepackage[parfill]{parskip}
+
+%% Titlepage
+\usepackage{titlepic}
+
+\titlepic{\includegraphics[width=0.3\textwidth]{../fig/esplogo}}
+\author{\large Copyright \textsuperscript{\textcopyright} 2011-2020 Columbia University\\
+\textit{System Level Design Group}}
+
+%% Sections
+\usepackage{lipsum}% http://ctan.org/pkg/lipsum
+\makeatletter
+\def\@makechapterhead#1{%
+  \vspace*{50\p@}%
+  {\parindent \z@ \raggedright \normalfont
+    \ifnum \c@secnumdepth >\m@ne
+      \if@mainmatter
+        %\huge\bfseries \@chapapp\space \thechapter
+        \Huge\bfseries \thechapter.\space%
+        %\par\nobreak
+        %\vskip 20\p@
+      \fi
+    \fi
+    \interlinepenalty\@M
+    \Huge \bfseries #1\par\nobreak
+    \vskip 40\p@
+  }}
+\makeatother
+
+%% Header/Footer
+\usepackage{fancyhdr}
+\fancyhf{} % sets both header and footer to nothing
+\renewcommand{\headrulewidth}{0.5pt}
+
+\cfoot{\thepage}
+
+\chead{}
+\rhead{\raisebox{-.35\height}{\includegraphics[width=0.8cm]{../fig/esplogo}}}
+\lhead{\texttt{ ESP: the open-source SoC platform}}
+\pagestyle{fancy}
+
+
+%% Waveforms https://nathantypanski.com/blog/2014-10-29-tikz-timing.html
+\usepackage{tikz-timing}
+\usetikztiminglibrary[rising arrows]{clockarrows}
+\usepackage{xparse}
+
+% Reference a bus.
+%
+% Usage:
+%
+%     \busref[3::0]{C/BE}    ->   C/BE[3::0]
+%     \busref*{AD}           ->   AD#
+%     \busref*[3::0]{C/BE}   ->   C/BE[3::0]#
+%
+\NewDocumentCommand{\busref}{som}{\texttt{%
+#3%
+\IfValueTF{#2}{[#2]}{}%
+\IfBooleanTF{#1}{\#}{}%
+}}
+
+\NewDocumentCommand{\slv}{som}{\textcolor{blue}{\texttt{%
+#3%
+\IfValueTF{#2}{[#2]}{}%
+\IfBooleanTF{#1}{\#}{}%
+}}}

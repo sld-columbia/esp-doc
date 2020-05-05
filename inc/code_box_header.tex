@@ -1,0 +1,63 @@
+
+\usepackage{tcolorbox}
+\tcbuselibrary{minted,listings,skins,most}
+\usepackage{minted}
+\usepackage{lipsum}
+
+\AtBeginEnvironment{mytcl}{\dontdofcolorbox}
+\def\dontdofcolorbox{\renewcommand\fcolorbox[4][]{##4}}
+
+\definecolor{consoleback}{rgb}{0.745098 0.745098 0.745098}
+\definecolor{tclback}{rgb}{1 0.980392 0.980392}
+\newmintinline[bashcode]{bash}{fontsize=\small,framesep=0.1pt,bgcolor=gray!15!white}
+
+\newtcolorbox{lattention}{breakable,enhanced,arc=0mm,colback=yellow!20,colframe=orange!40,leftrule=12mm,%
+overlay={\node[anchor=north west,outer sep=2pt] at (frame.north west) {\includegraphics[width=8mm]{img/warning.png}}; }}
+
+\newtcolorbox{linfo}{breakable,enhanced,arc=0mm,colback=blue!20,colframe=blue!40,leftrule=12mm,%
+overlay={\node[anchor=north west,outer sep=2pt] at (frame.north west) {\includegraphics[width=8mm]{img/idea.png}}; }}
+
+\setminted[console]{
+    bgcolor=consoleback,
+    breaklines=true,
+    fontsize=\tiny
+}
+
+\newtcblisting{mytcl}[2][]{listing engine=minted, listing only,#1, title=#2, minted language=tcl, colback=green!5!white,colframe=green!50!black, colbacktitle=green!25!white,enhanced,coltitle=black,
+breakable=true,
+fonttitle=\bfseries\footnotesize,
+attach boxed title to top center={yshift=-2mm}}
+
+\newtcblisting{mycpp}[2][]{listing engine=minted, listing only,#1, title=#2, minted language=c++, colback=red!2!white,colframe=red!50!black, colbacktitle=red!25!white,enhanced,coltitle=black,
+breakable=true,
+fonttitle=\bfseries\footnotesize,
+attach boxed title to top center={yshift=-2mm}}
+
+\newtcblisting{mymake}[2][]{listing engine=minted, listing only,#1, title=#2, minted language=makefile, colback=blue!5!white,colframe=blue!50!black, colbacktitle=blue!20!white,enhanced,coltitle=black,
+fonttitle=\bfseries\footnotesize,
+attach boxed title to top center={yshift=-2mm}}
+
+\newtcblisting{myxml}[2][]{listing engine=minted, listing only,#1, title=#2, minted language=xml, colback=brown!5!white,colframe=brown!50!black, colbacktitle=brown!25!white,enhanced,coltitle=black,
+fonttitle=\bfseries\footnotesize,
+attach boxed title to top center={yshift=-2mm}}
+
+\newtcblisting{commandshell}[2][]{colback=black!10!white,#1,title=#2, colupper=black,coltitle=black,colbacktitle=consoleback,boxrule=0pt,frame hidden,
+listing only,listing options={style=tcblatex,language=bash},
+breakable=true,
+fonttitle=\bfseries\footnotesize, left=3pt,right=3pt,
+every listing line={\textcolor{blue}{\small\ttfamily\bfseries \$> }}, enhanced,
+attach boxed title to top right={yshift=-5mm}}
+
+\newtcblisting{grmonshell}[2][]{colback=black!10!white,#1,title=#2, colupper=black,coltitle=black,colbacktitle=consoleback,boxrule=0pt,frame hidden,
+listing only,listing options={style=tcblatex,language=bash},
+breakable=true,
+fonttitle=\bfseries\footnotesize, left=3pt,right=3pt,
+every listing line={\textcolor{blue}{\small\ttfamily\bfseries grmon\$> }}, enhanced,
+attach boxed title to top right={yshift=-5mm}}
+
+
+\newtcblisting{printshell}[2][]{colback=black!10!white,#1,title=#2, colupper=black,coltitle=black,colbacktitle=consoleback,boxrule=0pt,frame hidden,
+listing only,listing options={style=tcblatex,language=bash},
+breakable=true,
+fonttitle=\bfseries\footnotesize, left=3pt,right=3pt,
+attach boxed title to top right={yshift=-5mm}}
