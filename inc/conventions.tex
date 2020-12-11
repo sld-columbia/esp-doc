@@ -1,0 +1,45 @@
+\section{Conventions}
+
+\begin{itemize}
+  \item {\bf bitwidth:} number of bits. This is typically associated to a
+    signal, or to a unit of data.
+  \item {\bf token:} the unit of input or output data transferred between the
+    accelerator and the ESP socket. The bitwidth of a token depends on the
+    particular accelerator and may vary across different transactions over a bus
+    or data channel.
+  \item {\bf beat:} the unit of data transferred on a bus, or a  data
+    channel. The bitwidth of one beat depends on the particular implementation
+    of the accelerator (e.g. {\it dma32} or {\it dma64}) and not on the data
+    type of the input or output token in a transaction. Therefore, for any given
+    implementation of an ESP accelerator, the bitwidth of a beat is constant.
+  \item {\bf flit:} the unit of data transferred over a network-on-chip
+    (NoC). For ESP accelerators, the bitwidth of a flit is equal to the bitwidth
+    of a beat plus two bits. These additional bits indicate if the flit is the
+    head, part of the body, or the tail of a packet.
+  \item {\bf packet:} a set of flits transferred in an ordered sequence across
+    the NoC. Packets must have one header flit, one tail flit and as many body
+    flits as necessary. Single-flit packets have just one flit with both {\it
+      head} and {\it tail} bits set. A packet that is granted a link of the NoC
+    will traverse such link from head to tail not interleaved with another
+    packet.
+  \item {\bf initiator} or {\bf master:} a component that can initiate a
+    transaction over a bus, or a NoC.
+  \item {\bf target} or {\bf slave:} a component that servers a transaction
+    initiated by a master.
+  \item {\bf latency-insensitive channel (LIC):} a bundle of data wires and two
+    control wires named {\it ready} and {\it valid}. During read transactions,
+    the master drives the {\it ready} control signal, while the slave drives the
+    data and the paired {\it valid} control signal. Roles are inverted for write
+    transactions. A beat is transferred over a LIC when both {\it ready} and
+    {\it valid} are set. Both master and slave have the ability to delay the
+    transfer of a beat for as many cycles as necessary.
+  \item {\bf CSR:} configuration and/or status register.
+  \item {\bf DMA:} the acronym for {\it direct-memory access}. When referring to
+    an ESP accelerator, the term DMA refers to the mechanism used by the
+    accelerator to access data in the system memory hierarchy. A DMA transaction
+    initiated by an accelerator in ESP may be accessing external memory
+    {\em directly} or by mediation of the ESP cache hierarchy. The selection is
+    managed by software at run time and is transparent to the accelerator.
+  \item {\bf PLM:} the accelerator's private local memory, composed of a set of
+    SRAM bank groups customized for the accelerator's datapath.
+\end{itemize}
