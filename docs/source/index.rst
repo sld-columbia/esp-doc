@@ -10,6 +10,9 @@ ESP: The Open Source SoC Platform
    :maxdepth: 2
    :caption: Contents:
 
+   singlecore-guide
+
+
 
 
 Indices and tables
